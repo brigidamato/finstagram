@@ -1,53 +1,81 @@
-def humanized_time_ago(time_ago_in_minutes)
-    if time_ago_in_minutes >= 60 
-       "#{time_ago_in_minutes / 60} hours ago"
-    else 
-        "#{time_ago_in_minutes} minutes ago"
-    end
-end
+helpers do 
+  def current_user
+    User.find_by(id: session[:user_id])
+  end 
+end 
 
 get '/' do
- @post_shark = {
-    username: "sharky_j",
-    avatar_url: "http://naserca.com/images/sharky_j.jpg",
-    photo_url: "http://naserca.com/images/shark.jpg",
-    humanized_time_ago: humanized_time_ago(15),
-    like_count: 0, 
-    comment_count: 1,
-    comments: [{
-        username: "sharky_J",
-        text: "Out for the long weekend... "
-    }]
-}
-
- @post_whale = { 
-    username: "kirk_whalum", 
-    avatar_url: "http://naserca.com/images/kirk_whalum.jpg",
-    photo_url: "http://naserca.com/images/whale.jpg",
-    humanized_time_ago: humanized_time_ago(65),
-    like_count: 0, 
-    comment_count: 1, 
-    comments: [{
-        username: "kirk_whalum",
-        text: "#weekendvibes"
-    }]
-}
-
- @post_marlin = { 
-    username: "marlin_peppa", 
-    avatar_url: "http://naserca.com/images/marlin_peppa.jpg",
-    photo_url: "http://naserca.com/images/marlin.jpg",
-    humanized_time_ago: humanized_time_ago(190),
-    like_count: 0, 
-    comment_count: 3, 
-    comments: [{
-        username: "marlin_peppa",
-        text: "#lunchtime" 
-    },
-    ]
-}
-
-   @posts = [@post_shark, @post_whale, @post_marlin]
-
+  @temp = "Hello"
+  @posts = Post.order(created_at: :desc)
   erb (:index)
 end
+
+get '/signup' do #if a user navigates to the path "/signup"
+  @user= User.new #setup empty @user object 
+  erb (:signup) # render "app/views/signup.erb"
+end
+ 
+post '/signup' do 
+  email     = params[:email]
+  avatar_url= params[:avatar_url]
+  username  = params[:username]
+  password  = params[:password]
+ 
+  # instantiate and save a User 
+  @user= User.new({ email: email, avatar_url: avatar_url, username: username, password: password})
+  
+  #if user validations pass and user is saved 
+  if @user.save
+    redirect to('/login')
+  else
+    erb(:signup)
+  end 
+end 
+
+get '/login' do #when a GET request comes into /login 
+  erb (:login) # render "app/views/login.erb
+end
+
+post '/login' do #when we submit a form with the action of /login
+  username = params[:username]
+  password = params[:password]
+
+  user= User.find_by(username: username)
+  
+  if user && user.password == password  
+     session[:user_id] = user.id 
+     redirect to('/')
+  else 
+      @error_message = "Login failed"
+      erb(:login)
+  end 
+end 
+
+get '/logout' do 
+  session[:user_id] = nil 
+  "Logout successful"
+end 
+
+get '/posts/new' do
+  @post = Post.new 
+  erb(:"posts/new")
+end 
+
+post '/posts' do 
+  photo_url = params[:photo_url]
+  
+  @post = Post.new({ photo_url: photo_url, user_id: current_user.id })
+  
+  if @post.save
+    redirect(to('/'))
+  else 
+    erb(:"posts/new")
+  end
+end 
+
+get '/posts/:id' do
+  @temp = "Hello"
+  @post= Post.find(params[:id]) # find the post with the id from the url 
+  erb(:"posts/show")            #render app/views/posts/show.erb 
+end 
+
