@@ -1,22 +1,22 @@
 configure do
   # Log queries to STDOUT in development
   if Sinatra::Application.development?
-    set :database, { 
+    set :database, {
       adapter: "sqlite3",
       database: "db/db.sqlite3"
     }
-  else   
+  else
     db = URI.parse(ENV['DATABASE_URL'])
-    set :database, { 
+    set :database, {
       adapter: "postgresql",
-      host: db.host, 
-      username: db.user, 
-      passwprd: db.password, 
+      host: db.host,
+      username: db.user,
+      password: db.password,
       database: db.path[1..-1],
       encoding: "utf8"
-    } 
-  end 
-  
+    }
+  end
+
   # Load all models from app/models, using autoload instead of require
   # See http://www.rubyinside.com/ruby-techniques-revealed-autoload-1652.html
   Dir[APP_ROOT.join('app', 'models', '*.rb')].each do |model_file|
